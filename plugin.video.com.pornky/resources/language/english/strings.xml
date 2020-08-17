@@ -1,0 +1,22 @@
+<strings>
+    <string id="30001">General</string>
+    <string id="30002">Filter</string>
+
+    <string id="30010">Resolution</string>
+    <string id="30011">highest</string>
+    <string id="30012">up to 1080</string>
+    <string id="30013">up to 720</string>
+    <string id="30014">up to 480</string>
+    <string id="30015">up to 360</string>
+    <string id="30019">lowest</string>
+
+    <string id="30020">Begin with categories</string>
+    <string id="30030">Favorite searches (comma separated)</string>
+
+    <string id="30050">Filter type</string>
+    <string id="30051">suppress filter items</string>
+    <string id="30052">off</string>
+    <string id="30053">show filter items only</string>
+
+    <string id="30060">Filter items (comma separated)</string>
+</strings>

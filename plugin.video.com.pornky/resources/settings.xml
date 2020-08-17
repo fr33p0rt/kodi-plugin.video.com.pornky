@@ -1,0 +1,10 @@
+<settings>
+    <category label="30001">
+        <setting id="res" type="enum" label="30010" lvalues="30011|30012|30013|30014|30015|30019" default="0" />
+        <setting id="searchitems" type="text" label="30030" default="Abella,Nappi,Elsa,Riley,Gianna" />
+    </category>
+    <category label="30002">
+        <setting id="filter" type="enum" label="30050" lvalues="30051|30052|30053" default="0" />
+        <setting label="30060" type="text" id="filteritems" default="Gay,Shemale" enable="!eq(-1,1)" />
+    </category>
+</settings>

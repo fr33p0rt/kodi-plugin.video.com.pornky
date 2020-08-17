@@ -1,0 +1,23 @@
+<strings>
+    <string id="30001">Obecné</string>
+    <string id="30002">Filtrování</string>
+
+    <string id="30010">Rozlišení</string>
+    <string id="30011">nejvyšší</string>
+    <string id="30012">maximálně 1080</string>
+    <string id="30013">maximálně 720</string>
+    <string id="30014">maximálně 480</string>
+    <string id="30015">maximálně 360</string>
+    <string id="30019">nejnižší</string>
+
+    <string id="30020">Zobrazit rovnou kategorie</string>
+
+    <string id="30030">Oblíbené hledání (oddělené čárkou)</string>
+
+    <string id="30050">Způsob filtrování</string>
+    <string id="30051">potlačit položky filtru</string>
+    <string id="30052">vypnuto</string>
+    <string id="30053">zobrazit jen položky filtru</string>
+
+    <string id="30060">Položky filtru (oddělené čárkou)</string>
+</strings>

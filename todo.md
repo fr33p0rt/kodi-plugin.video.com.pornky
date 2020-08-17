@@ -1,0 +1,4 @@
+- [ ] Better translation
+- [ ] Replace XML with PO
+- [ ] Support for Kodi 19
+- [ ] Custom video name format
