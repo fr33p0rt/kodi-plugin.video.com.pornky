@@ -3,8 +3,11 @@
 # Author/Copyright: fr33p0rt (based on code by Roman V. M.)
 # License: GPLv3 https://www.gnu.org/copyleft/gpl.html
 
+import os
 import sys
+import re
 import urllib
+import requests
 
 from urllib import urlencode
 from urlparse import parse_qsl
@@ -12,7 +15,6 @@ import xbmc
 import xbmcgui
 import xbmcplugin
 import xbmcaddon
-import os
 
 from resources.lib.pornky.pornky import Pornky
 
@@ -20,12 +22,27 @@ from resources.lib.cfg.filter import Filter
 from resources.lib.cfg.res import Res
 from resources.lib.cfg.cfg import Cfg
 
-# Get the plugin url in plugin:// notation.
-_url = sys.argv[0]
-# Get the plugin handle as an integer number.
-_handle = int(sys.argv[1])
+from contextlib import contextmanager
 
-pornky = Pornky()
+
+@contextmanager
+def busy_dialog():
+    # Get Kodi version
+    kodi_version = re.findall(r'[0-9.]+|$', xbmc.getInfoLabel('System.BuildVersion'))[0]
+
+    xbmc.log('Kodi version: %s' % kodi_version, xbmc.LOGERROR)
+
+    if int(kodi_version.split('.')[0]) >= 18:
+        dialog = 'busydialognocancel'
+    else:
+        dialog = 'busydialog'
+
+    xbmc.executebuiltin('ActivateWindow({})'.format(dialog))
+    try:
+        yield
+    finally:
+        xbmc.executebuiltin('Dialog.Close({})'.format(dialog))
+
 
 def get_url(**kwargs):
     """
@@ -106,17 +123,26 @@ def list_root():
     xbmcplugin.setPluginCategory(_handle, 'pornky.com')
     xbmcplugin.setContent(_handle, 'videos')
     main_menu = pornky.get_main_menu()
+    log_menu = pornky.get_log_menu()
     list_item = xbmcgui.ListItem('Donate ...')
     list_item.setInfo('video', {'title': 'Donate ...',
                                 'genre': 'Donate ...',
-                                'url': '',
                                 'mediatype': 'video'})
     url = get_url(action='donatemenu', category='')
     xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
+
+    for menu_item in log_menu:
+        list_item = xbmcgui.ListItem(label=menu_item['name'])
+        list_item.setInfo('video', {'title': menu_item['name'],
+                                    'genre': menu_item['name'],
+                                    'mediatype': 'video'})
+
+        url = get_url(action='listing', category=menu_item['url'])
+        xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
+
     list_item = xbmcgui.ListItem('Search menu ...')
     list_item.setInfo('video', {'title': 'Search menu ...',
                                 'genre': 'Search menu ...',
-                                'url': 'search/?q=',
                                 'mediatype': 'video'})
     url = get_url(action='searchmenu', category='')
     xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
@@ -124,7 +150,6 @@ def list_root():
         list_item = xbmcgui.ListItem(label=menu_item['name'])
         list_item.setInfo('video', {'title': menu_item['name'],
                                     'genre': menu_item['name'],
-                                    'url': menu_item['url'],
                                     'mediatype': 'video'})
 
         if menu_item['name'][0:7] == 'Categor':
@@ -149,8 +174,8 @@ def list_categories():
     categories = get_categories()
     # Iterate through categories
     for category in categories:
-        if (cfg.filter == Filter.SUPPRESS and category['name'] not in cfg.filteritems) or\
-                (cfg.filter == Filter.ONLY and category['name'] in cfg.filteritems) or\
+        if (cfg.filter == Filter.SUPPRESS and category['name'] not in cfg.filter_items) or\
+                (cfg.filter == Filter.ONLY and category['name'] in cfg.filter_items) or\
                  cfg.filter == Filter.OFF:
             # Create a list item with a text label and a thumbnail image.
             list_item = xbmcgui.ListItem(label=category['name'])
@@ -167,7 +192,6 @@ def list_categories():
             # 'mediatype' is needed for a skin to display info for this ListItem correctly.
             list_item.setInfo('video', {'title': category['name'],
                                         'genre': category['name'],
-                                        'url': category['url'],
                                         'mediatype': 'video'})
             list_item.setProperty('IsPlayable', 'true')
             # Create a URL for a plugin recursive call.
@@ -193,6 +217,8 @@ def list_videos(url):
     xbmcplugin.setContent(_handle, 'videos')
     # Get the list of videos in the page.
     videos, next_page = get_videos(url)
+
+    downloader_path = os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'lib', 'pornky', 'downloader.py')
     # Iterate through videos.
     for video in videos:
         # Create a list item with a text label and a thumbnail image.
@@ -201,12 +227,19 @@ def list_videos(url):
         # 'mediatype' is needed for skin to display info for this ListItem correctly.
         list_item.setInfo('video', {'title': '%s (%s)' % (video['name'], video['duration']),
                                     'genre': video['categories'],
-                                    'url': video['page'],
                                     'mediatype': 'video'})
         # Set graphics (thumbnail, fanart, banner, poster, landscape etc.) for the list item.
         # Here we use the same image for all items for simplicity's sake.
         # In a real-life plugin you need to set each image accordingly.
         list_item.setArt({'thumb': video['thumb'], 'icon': video['thumb'], 'fanart': video['thumb']})
+
+        url = get_url(action='download', video_page=video['page'], video_name=video['name'])
+        context_menu = [('Download video',
+                         'RunPlugin({})'.format(url))]
+#                         'ActivateWindow(busydialog)')]
+#                         'ActivateWindow(yesnodialog,{},return'.format(url))]
+        list_item.addContextMenuItems(context_menu)
+
         # Set 'IsPlayable' property to 'true'.
         # This is mandatory for playable items!
         list_item.setProperty('IsPlayable', 'true')
@@ -222,7 +255,6 @@ def list_videos(url):
         list_item = xbmcgui.ListItem(label=next_page['name'])
         list_item.setInfo('video', {'title': next_page['name'],
                                     'genre': next_page['name'],
-                                    'url': next_page['url'],
                                     'mediatype': 'video'})
         url = get_url(action='listing', category=next_page['url'])
         # is_folder = True means that this item opens a sub-list of lower level items.
@@ -241,7 +273,7 @@ def search_dialog():
     if len(search_string) == 0:
         return
     query = urllib.quote('%s' % search_string)
-    search_url = pornky.URLSEARCH % query
+    search_url = pornky.URL_SEARCH % query
     list_videos(search_url)
 
 
@@ -252,17 +284,15 @@ def search_menu():
     list_item = xbmcgui.ListItem('Search form ...')
     list_item.setInfo('video', {'title': 'Search',
                                 'genre': 'Search form ...',
-                                'url': 'search/?q=',
                                 'mediatype': 'video'})
     url = get_url(action='search', category='')
     is_folder = True
     xbmcplugin.addDirectoryItem(_handle, url, list_item, is_folder)
 
-    for i in cfg.searchitems:
+    for i in cfg.search_items:
         list_item = xbmcgui.ListItem(label=i)
         list_item.setInfo('video', {'title': i,
                                     'genre': i,
-                                    'url': 'search/?q='+i,
                                     'mediatype': 'video'})
         #list_item.setArt({'thumb': video['thumb'], 'icon': video['thumb'], 'fanart': video['thumb']})
         #list_item.setProperty('IsPlayable', 'true')
@@ -286,14 +316,14 @@ def show_image(path):
 
 def play_video(path):
     """
-    Play a video by the provided path.
+    Play a video by the provided path and the resolution from config.
 
-    :param path: Fully-qualified video URL
+    :param path: Fully-qualified video page URL
     :type path: str
     """
-    videos = sorted((x for x in pornky.get_video_links(path) if x[0] <= cfg.res.res() or cfg.res.res() == 0), reverse=cfg.res.res() != 0)
+    video = pornky.get_video_link(path, cfg.res.res())
     # Create a playable item with a path to play.
-    play_item = xbmcgui.ListItem(path=videos[0][1])
+    play_item = xbmcgui.ListItem(path=video[1])
     # Pass the item to the Kodi player.
     xbmcplugin.setResolvedUrl(_handle, True, listitem=play_item)
 
@@ -342,16 +372,82 @@ def router(paramstring):
         list_root()
 
 
+def router_special(paramstring):
+    params = dict(parse_qsl(paramstring))
+    if params:
+        xbmc.log(params['action'], xbmc.LOGERROR)
+        if params['action'] == 'download':
+            # Download
+            xbmc.log('Download routine started', xbmc.LOGERROR)
+            xbmc.log('for video {}'.format(params['video_name']), xbmc.LOGERROR)
+            res = Res(int(xbmcaddon.Addon(id=_id).getSetting('res')))
+            download_path = xbmcaddon.Addon(id=_id).getSetting('download_path')
+            if not download_path:
+                xbmcgui.Dialog().ok('Download Error!', 'Download path is not set!')
+                return
+
+            video_url = pornky.get_video_link(params['video_page'], res.res())[1]
+            xbmc.log('Downloading: {}'.format(video_url), xbmc.LOGERROR)
+            video_name = re.sub('[^0-9A-Za-z _-]+', '', params['video_name']).replace(' ', '_')
+
+            xbmc.log('as: {}'.format(video_name), xbmc.LOGERROR)
+            size = int(requests.head(video_url, allow_redirects=True).headers.get('content-length', 0))
+            xbmc.log('Size: {} MB'.format(str(size >> 20)), xbmc.LOGERROR)
+
+            result = 'Download Error!'
+            with busy_dialog():
+                try:
+                    r = requests.get(video_url)
+                    with open(os.path.join(download_path, video_name + '.mp4'), "wb") as video_file:
+                        video_file.write(r.content)
+                    result = 'Download Complete!'
+                except:
+                    pass
+            xbmc.log(result, xbmc.LOGERROR)
+            xbmcgui.Dialog().ok(result, result)
+
+
+# Get the plugin url in plugin:// notation.
+_url = sys.argv[0]
+_id = _url.replace('plugin://', '').replace('/', '')
+# Get the plugin handle as an integer number.
+_handle = int(sys.argv[1])
+_version = '0.9.2'
+
 if __name__ == '__main__':
+    pornky = Pornky()
+
     # Call the router function and pass the plugin call parameters to it.
     # We use string slicing to trim the leading '?' from the plugin call paramstring
 
-    cfg = Cfg()
+    xbmc.log(str(sys.argv), xbmc.LOGERROR)
 
-    cfg.res = Res(int(xbmcplugin.getSetting(int(sys.argv[1]), 'res')))
-    cfg.searchitems = xbmcplugin.getSetting(int(sys.argv[1]), 'searchitems').split(',')
+    # xbmc.log('Kodi version: %s' % xbmc.getInfoLabel('System.BuildVersion'), xbmc.LOGERROR)
 
-    cfg.filter = Filter(int(xbmcplugin.getSetting(int(sys.argv[1]), 'filter')))
-    cfg.filteritems = xbmcplugin.getSetting(int(sys.argv[1]), 'filteritems').split(',')
+    if _handle == -1:
+        router_special(sys.argv[2][1:])
+    else:
+        cfg = Cfg()
 
-    router(sys.argv[2][1:])
+        cfg.res = Res(int(xbmcplugin.getSetting(_handle, 'res')))
+        cfg.search_items = xbmcplugin.getSetting(_handle, 'search_items').split(',')
+
+        cfg.filter = Filter(int(xbmcplugin.getSetting(_handle, 'filter')))
+        cfg.filter_items = xbmcplugin.getSetting(_handle, 'filter_items').split(',')
+
+        cfg.username = xbmcplugin.getSetting(_handle, 'username')
+        cfg.password = xbmcplugin.getSetting(_handle, 'password')
+
+        cfg.cookie_PHPSESSID = xbmcplugin.getSetting(_handle, 'cookie_PHPSESSID')
+        cfg.cookie_XSAE = xbmcplugin.getSetting(_handle, 'cookie_XSAE')
+
+        cfg.disable_login = xbmcplugin.getSetting(_handle, 'disable_login') == 'true'
+
+        logged_in, cookies = pornky.set_cookies(cfg)
+        if logged_in and cookies:
+            xbmcaddon.Addon(_id).setSetting(id='cookie_XSAE', value=cookies['XSAE'])
+            xbmcaddon.Addon(_id).setSetting(id='cookie_PHPSESSID', value=cookies['PHPSESSID'])
+        if not logged_in and cfg.username and cfg.password and not cfg.disable_login:
+            dialog = xbmcgui.Dialog()
+            ok = dialog.ok('pornky.com', 'Login error.\nCheck username/password or disable login.')
+        router(sys.argv[2][1:])

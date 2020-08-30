@@ -1,6 +1,8 @@
 <strings>
     <string id="30001">Obecné</string>
     <string id="30002">Filtrování</string>
+    <string id="30003">Stahování</string>
+    <string id="30004">Přihlašovací údaje</string>
 
     <string id="30010">Rozlišení</string>
     <string id="30011">nejvyšší</string>
@@ -20,4 +22,12 @@
     <string id="30053">zobrazit jen položky filtru</string>
 
     <string id="30060">Položky filtru (oddělené čárkou)</string>
+
+    <string id="30300">Složka pro stahování</string>
+
+    <string id="30400">Nepřihlašovat</string>>
+    <string id="30401">Uživatelské jméno</string>
+    <string id="30402">Heslo</string>
+    <string id="30403">Cookie PHPSESSID</string>
+    <string id="30404">Cookie XSAE</string>
 </strings>

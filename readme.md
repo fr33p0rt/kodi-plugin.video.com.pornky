@@ -1,4 +1,4 @@
-Go to [main addon readme](plugin.video.com.pornky/readme.md)
+Go to [main addon readme](plugin.video.com.pornky/readme.md) | [FAQ](faq.md)
 
 #### Donate
 

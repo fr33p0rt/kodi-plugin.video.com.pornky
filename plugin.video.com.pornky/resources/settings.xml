@@ -1,10 +1,22 @@
 <settings>
     <category label="30001">
         <setting id="res" type="enum" label="30010" lvalues="30011|30012|30013|30014|30015|30019" default="0" />
-        <setting id="searchitems" type="text" label="30030" default="Abella,Nappi,Elsa,Riley,Gianna" />
+        <setting id="search_items" type="text" label="30030" default="Abella,Nappi,Elsa,Riley,Gianna" />
     </category>
     <category label="30002">
         <setting id="filter" type="enum" label="30050" lvalues="30051|30052|30053" default="0" />
-        <setting label="30060" type="text" id="filteritems" default="Gay,Shemale" enable="!eq(-1,1)" />
+        <setting label="30060" type="text" id="filter_items" default="Gay,Shemale" enable="!eq(-1,1)" />
+    </category>
+    <category label="30003">
+        <setting id="download_path" type="folder" source="local" label="30300"  option="writeable" default=""/>
+    </category>
+    <category label="30004">
+        <setting label="30400" type="bool" id="disable_login" default="false" />
+        <setting type="sep"/>
+        <setting label="30401" type="text" id="username" default="" enable="eq(-2,false)" />
+        <setting label="30402" type="text" id="password" option="hidden" default="" enable="eq(-3,false)" />
+        <setting type="sep"/>
+        <setting label="30403" type="text" id="cookie_PHPSESSID" default="" enable="eq(-5,false)" />
+        <setting label="30404" type="text" id="cookie_XSAE" default="" enable="eq(-6,false)" />
     </category>
 </settings>

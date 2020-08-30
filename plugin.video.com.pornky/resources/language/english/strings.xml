@@ -1,6 +1,8 @@
 <strings>
     <string id="30001">General</string>
     <string id="30002">Filter</string>
+    <string id="30003">Download</string>
+    <string id="30004">Credentials</string>
 
     <string id="30010">Resolution</string>
     <string id="30011">highest</string>
@@ -19,4 +21,12 @@
     <string id="30053">show filter items only</string>
 
     <string id="30060">Filter items (comma separated)</string>
+
+    <string id="30300">Download folder</string>
+
+    <string id="30400">Login disabled</string>>
+    <string id="30401">Username</string>
+    <string id="30402">Password</string>
+    <string id="30403">Cookie PHPSESSID</string>
+    <string id="30404">Cookie XSAE</string>
 </strings>

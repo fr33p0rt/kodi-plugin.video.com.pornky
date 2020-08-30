@@ -46,6 +46,9 @@ This script has been tested with Python 2.7.6 and Python 3.4.3. It
 depends on the GitPython module.
 """
 
+# Mods by fr33p0rt: skipping files by extension, skipping tests
+
+
 __author__ = "Chad Parry"
 __contact__ = "github@chad.parry.org"
 __copyright__ = "Copyright 2016-2017 Chad Parry"
@@ -212,6 +215,8 @@ def fetch_addon_from_folder(raw_addon_location, target_folder):
             for relative_path in files:
 
                 if relative_path.endswith(('.zip','.md5','.bak','.pyo','.pyc')):
+                    continue
+                if (re.match('^[Tt][Ee][Ss][Tt].*\.py$', relative_path)):
                     continue
                 print "adding %s" % os.path.join(root, relative_path)
 

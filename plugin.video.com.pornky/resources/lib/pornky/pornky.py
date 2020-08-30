@@ -8,11 +8,13 @@ from bs4 import BeautifulSoup
 
 class Pornky:
     URL = 'https://www.pornky.com/'
-    URLCAT = '%s%s' % (URL, 'categories/')
-    URLSEARCH = '%s%s' % (URL, 'search/?q=%s')
+    URL_CAT = '%s%s' % (URL, 'categories/')
+    URL_SEARCH = '%s%s' % (URL, 'search/?q=%s')
+    URL_LOGIN = '%s%s' % (URL, 'login.php')
     cookies = None
     categories = []
     main_menu = []
+    log_menu = []
     videos = []
     root_page = ''
     categories_page = ''
@@ -30,6 +32,41 @@ class Pornky:
         :type type str
         """
         pass
+
+    def login(self, username, password):
+        # headers = {'Content-Type': 'application/x-www-form-urlencoded', 'Referer': self.URL, 'X-Requested-With': 'XMLHttpRequest'}
+        payload = {'action': 'login', 'format': 'json', 'mode': 'async', 'username': username, 'pass': password}
+        #r = requests.post(self.URL_LOGIN, cookies=self.get_cookies(), data=payload, verify=False)
+        r = requests.post(self.URL_LOGIN, data=payload, verify=False)
+        if '"status":"success"' not in r.content:
+            return
+        return r.cookies
+
+    def set_cookies(self, cfg):
+        if cfg.disable_login:
+            self.get_cookies()
+            return False, {}
+        logged_in = False
+        if cfg.cookie_PHPSESSID and cfg.cookie_XSAE:
+            self.cookies = {'PHPSESSID': cfg.cookie_PHPSESSID, 'XSAE': cfg.cookie_XSAE}
+            r = self.get_root_page()
+            #r = requests.get(self.URL, verify=False)
+            logged_in = '/my_favourite_videos/' in r
+            if logged_in:
+                return True, {}
+        if cfg.username and cfg.password and not logged_in:
+            self.cookies = {}
+            self.root_page = ''
+            self.get_root_page()
+            cookies2 = self.login(cfg.username, cfg.password)
+            if cookies2:
+                self.cookies = requests.cookies.merge_cookies(self.cookies, cookies2)
+                self.root_page = ''
+                r = self.get_root_page()
+                logged_in = '/my_favourite_videos/' in r
+            if logged_in:
+                return True, self.cookies
+        return False, {}
 
     def get_cookies(self):
         """
@@ -52,8 +89,21 @@ class Pornky:
         Returns page with categories
         """
         if not self.categories_page:
-            self.categories_page = requests.get(self.URLCAT, cookies=self.get_cookies(), verify=False).text
+            self.categories_page = requests.get(self.URL_CAT, cookies=self.get_cookies(), verify=False).text
         return self.categories_page
+
+    def get_log_menu(self):
+        """
+        Returns log menu item 'My favourite videos' from root page
+        """
+        if not self.log_menu:
+            soup = BeautifulSoup(self.get_root_page(), 'html.parser').find('div', id="logmenu")
+            if soup:
+                cnt = 0
+                for i in soup.find_all('a'):
+                    if i.get('title') == 'My favourite videos':
+                        self.log_menu.append({'name': i.get('title') + ' ...', 'url': i.get('href')})
+        return self.log_menu
 
     def get_main_menu(self):
         """
@@ -103,6 +153,13 @@ class Pornky:
             video_links.append((int(''.join(x for x in data_c[1] if x.isdigit())), url))
 
         return video_links
+
+    def get_video_link(self, url, max_resolution):
+        video_links = self.get_video_links(url)
+        video_links.sort(reverse=True)
+        while len(video_links) > 1 and video_links[0][0] > max_resolution:
+            video_links = video_links[1:]
+        return video_links[0]
 
     def get_page(self, url):
         """
