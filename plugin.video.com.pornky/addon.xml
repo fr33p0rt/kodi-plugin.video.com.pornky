@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon id="plugin.video.com.pornky"
-version="0.9.2"
+version="0.9.3"
 name="pornky.com"
 provider-name="fr33p0rt (fr33p0rt@protonmail.com)">
 <requires>
@@ -24,6 +24,6 @@ provider-name="fr33p0rt (fr33p0rt@protonmail.com)">
     <fanart>fanart.jpg</fanart>
   </assets>
   <email>fr33p0rt@protonmail.com</email>
-  <news>Login and download support.</news>
+  <news>Remote path calculation update.</news>
 </extension>
 </addon>

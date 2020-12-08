@@ -24,6 +24,8 @@ from resources.lib.cfg.cfg import Cfg
 
 from contextlib import contextmanager
 
+__version__ = '0.9.3'
+
 
 @contextmanager
 def busy_dialog():

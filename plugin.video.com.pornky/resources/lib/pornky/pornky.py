@@ -145,7 +145,7 @@ class Pornky:
         for data_c in data_c_list:
 
             res_suffix = '_' + data_c[1] if default != data_c[1] else ''
-            url = 'http://s{}.fapmedia.com/cqlvid/{}/{}/{}000/{}/{}{}.mp4/{}{}.mp4'.format(
+            url = 'http://s{}.fapmedia.com/wqlvid/{}/{}/{}000/{}/{}{}.mp4/{}{}.mp4'.format(
                 data_c[7], data_c[5], data_c[6],
                 str((int(data_c[4]) // 1000)), data_c[4],
                 data_c[4], res_suffix, data_c[4], res_suffix)
